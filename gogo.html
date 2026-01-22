@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logisian | Premium Welfare System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --main-blue:#004691;
+      --sub-blue:#00AEEF;
+      --glass-white: rgba(255,255,255,.92);
+      --text:#1b1f2a;
+      --muted:#5b6272;
+      --shadow: 0 18px 50px rgba(0,0,0,.08);
+      --shadow2: 0 14px 40px rgba(0,70,145,.12);
+      --modalTop: 0px;
+    }
+
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{
+      font-family:'Noto Sans KR', sans-serif;
+      background:#fbfcfd;
+      color:var(--text);
+      overflow-x:hidden;
+      perspective: 1000px;
+      position: relative; /* Absolute 모달 배치의 기준 */
+    }
+
+    /* HERO - 애니메이션 유지 */
+    .hero{
+      height: clamp(280px, 42vh, 420px);
+      background: radial-gradient(circle at top right, #0063d1, #00152a);
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
+      color:#fff; position:relative; overflow:hidden;
+    }
+    .hero::before{
+      content:""; position:absolute; width:220%; height:220%;
+      background:url('https://www.transparenttextures.com/patterns/cubes.png');
+      opacity:.28; filter: contrast(165%) saturate(130%);
+      animation: rotate 80s linear infinite; transform-origin:center;
+    }
+    @keyframes rotate{ from{ transform: rotate(0) } to{ transform: rotate(360deg) } }
+    .hero h1{ font-family:'Montserrat', sans-serif; font-size: clamp(2.2rem, 7vw, 3.6rem); z-index:1; text-shadow:0 12px 30px rgba(0,0,0,.35); margin-bottom: 14px; letter-spacing: 2px; }
+    .hero p{ z-index:1; font-weight:300; letter-spacing:4px; opacity:.95; text-align:center; }
+
+    .main-container{ max-width:1200px; margin: 60px auto 100px; padding: 0 20px; position:relative; z-index:10; }
+    .category-wrapper{ margin-bottom: 92px; }
+    .category-header{ margin-bottom: 34px; text-align:center; }
+    .category-header h2{ font-size: 2rem; color: var(--main-blue); position:relative; display:inline-block; padding-bottom: 12px; }
+    .category-header h2::after{ content:""; position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:72px; height:4px; background: var(--sub-blue); border-radius: 2px; }
+
+    .welfare-grid{ display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+
+    /* CARD - 3D 효과 유지 */
+    .card-3d{
+      background: var(--glass-white); border-radius: 24px; padding: 38px 30px; border: 1px solid rgba(255,255,255,.55);
+      backdrop-filter: blur(10px); box-shadow: var(--shadow); cursor:pointer; position:relative; transform-style: preserve-3d;
+      transition: box-shadow .35s ease, transform .15s ease; will-change: transform;
+    }
+    .card-3d:hover{ box-shadow: var(--shadow2); }
+    .icon-box{ width:58px; height:58px; background:#eef6ff; border-radius: 16px; display:flex; align-items:center; justify-content:center; font-size: 1.7rem; margin-bottom: 22px; }
+    .card-3d h3{ font-size: 1.35rem; color: var(--main-blue); margin-bottom: 12px; }
+    .card-content{ font-size: .95rem; color: var(--muted); line-height: 1.75; }
+    .card-content span{ display:block; margin-top: 10px; font-weight: 600; color: var(--sub-blue); }
+
+    /* MODAL - 위치 오류 해결을 위한 핵심 수정 */
+    .modal-dim{
+      position:fixed; inset:0; background: rgba(10,14,20,.55); z-index: 200;
+      opacity:0; pointer-events:none; transition: opacity .2s ease;
+    }
+    .modal-dim.open{ opacity:1; pointer-events:auto; }
+
+    .modal{
+      position: absolute; /* fixed에서 absolute로 변경: 문서 스크롤 위치에 고정 */
+      left: 50%; transform: translateX(-50%);
+      width: min(760px, 92%); z-index: 210;
+      top: var(--modalTop);
+      display: none; /* JS로 제어 */
+    }
+    .modal.open { display: block; }
+
+    .modal-panel{
+      background: rgba(255,255,255,.98); border-radius: 26px; box-shadow: 0 30px 80px rgba(0,0,0,.25);
+      padding-bottom: 20px; animation: modalFadeIn 0.3s ease-out;
+    }
+    @keyframes modalFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .modal-header{ padding: 24px; border-bottom: 1px solid rgba(0,0,0,.08); display:flex; justify-content:space-between; align-items: center; }
+    .modal-title-wrap{ display:flex; gap: 15px; align-items:center; }
+    .modal-icon{ width:46px; height:46px; border-radius:12px; background:#eef6ff; display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+    .modal-title{ font-size: 1.3rem; color: var(--main-blue); margin:0; }
+    .modal-close{ border:none; background:#f0f0f0; padding:8px 16px; border-radius:20px; cursor:pointer; font-weight:600; }
+
+    .modal-body{ padding: 24px; }
+    .modal-summary{ margin-bottom: 20px; color: var(--muted); line-height: 1.8; }
+    .kv{ border: 1px solid rgba(0,0,0,.08); background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 12px; }
+    .kv-title{ font-size: .78rem; letter-spacing: .14em; color: var(--sub-blue); margin-bottom: 10px; font-weight: 700; }
+    .kv-grid{ display:grid; grid-template-columns: 120px 1fr; gap: 8px 12px; font-size: .95rem; }
+    .k{ color: var(--muted); }
+    .v{ color: var(--text); white-space: pre-wrap; }
+
+    .reveal{ opacity: 0; transform: translateY(16px); transition: 0.7s ease; }
+    .reveal.in{ opacity: 1; transform: translateY(0); }
+    footer{ text-align:center; padding: 50px; opacity: .65; font-size: .85rem; }
+  </style>
+</head>
+
+<body>
+  <section class="hero">
+    <h1>LOGISIAN</h1>
+    <p>PREMIUM WELFARE SYSTEM</p>
+  </section>
+
+  <main class="main-container">
+    <div class="category-wrapper reveal">
+      <div class="category-header"><h2>Health & Safety</h2></div>
+      <div class="welfare-grid">
+        <div class="card-3d" data-section="Health & Safety" data-icon="🧾" data-title="4대보험 · 근재보험 가입"
+          data-summary="국민/건강/고용/산재보험 가입을 기본으로 운영하며, 고위험 직군은 근재보험을 추가 가입하여 사고 리스크를 최소화합니다."
+          data-kv='[{"title":"KEY","fields":{"대상":"전 임직원","내용":"4대보험 기본 가입 + 근재보험 추가","문의":"경영지원"}}]'>
+          <div class="icon-box">🧾</div>
+          <h3>4대보험 · 근재보험 가입</h3>
+          <div class="card-content">고위험 직군은 <strong>근재보험을 추가 가입</strong>하여 사고 리스크를 최소화합니다.</div>
+        </div>
+        <div class="card-3d" data-section="Health & Safety" data-icon="🏥" data-title="건강검진 지원(일반/종합)"
+          data-summary="전 사원 일반검진 지원(현장 직군 매년 1회). 과장급 이상은 격년(짝수 해) 1회 종합검진비 20만원 지원."
+          data-kv='[{"title":"KEY","fields":{"대상":"전 임직원","내용":"일반검진 + 종합검진비 20만원(과장급↑)","문의":"인사 담당"}}]'>
+          <div class="icon-box">🏥</div>
+          <h3>건강검진 지원(일반/종합)</h3>
+          <div class="card-content">과장급 이상은 격년 1회 <strong>종합검진비 20만원</strong>을 지원합니다.</div>
+        </div>
+        <div class="card-3d" data-section="Health & Safety" data-icon="🦺" data-title="유니폼 · 안전장비 지급"
+          data-summary="동계점퍼, 티셔츠, 안전화 및 개인 안전장구(방진마스크, 장갑 등)를 시기별로 지급합니다."
+          data-kv='[{"title":"KEY","fields":{"대상":"현장 운영 인력","내용":"계절 유니폼/안전화/안전장구 지급","문의":"사업장 관리자"}}]'>
+          <div class="icon-box">🦺</div>
+          <h3>유니폼 · 안전장비 지급</h3>
+          <div class="card-content">최적의 근무 환경을 위해 계절 유니폼과 안전장구를 지급합니다.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-wrapper reveal">
+      <div class="category-header"><h2>Growth & Reward</h2></div>
+      <div class="welfare-grid">
+        <div class="card-3d" data-icon="🌿" data-title="연차휴가" data-kv='[{"title":"KEY","fields":{"내용":"법정 기준 연차 부여"}}]' data-summary="재충전을 지원합니다."><div class="icon-box">🌿</div><h3>연차휴가</h3><div class="card-content">법정 기준에 따라 연차를 부여합니다.</div></div>
+        <div class="card-3d" data-icon="💼" data-title="퇴직금" data-kv='[{"title":"KEY","fields":{"내용":"법정 기준 지급"}}]' data-summary="퇴직금을 지급합니다."><div class="icon-box">💼</div><h3>퇴직금</h3><div class="card-content">근로 종료 시 법정 기준에 따라 퇴직금을 지급합니다.</div></div>
+        <div class="card-3d" data-icon="💎" data-title="장기근속 포상" data-kv='[{"title":"포상","fields":{"10년":"유급 5일+100만","20년":"유급 10일+200만"}}]' data-summary="장기근속자를 포상합니다."><div class="icon-box">💎</div><h3>장기근속 포상</h3><div class="card-content">마일스톤에 따라 유급휴가와 상품권을 제공합니다.</div></div>
+        <div class="card-3d" data-icon="🏅" data-title="성과평가 포상" data-kv='[{"title":"대상","fields":{"범위":"개인 및 사업장"}}]' data-summary="성과 우수자를 포상합니다."><div class="icon-box">🏅</div><h3>성과평가 포상</h3><div class="card-content">성과 우수 임직원/사업장을 포상합니다.</div></div>
+        <div class="card-3d" data-icon="🎓" data-title="학자금 지원" data-kv='[{"title":"지원","fields":{"일반":"연 100만원 지원"}}]' data-summary="학습을 지원합니다."><div class="icon-box">🎓</div><h3>학자금 지원</h3><div class="card-content">일학습병행 및 대학 학자금을 지원합니다.</div></div>
+        <div class="card-3d" data-icon="📚" data-title="자격증 인센티브" data-kv='[{"title":"지급","fields":{"금액":"1회 20만원"}}]' data-summary="자격 취득을 장려합니다."><div class="icon-box">📚</div><h3>자격증 취득 인센티브</h3><div class="card-content">주요 자격 취득 시 <strong>20만원</strong>을 지급합니다.</div></div>
+        <div class="card-3d" data-icon="💡" data-title="직무발명 포상" data-kv='[{"title":"보상","fields":{"기준":"수익 기여도별"}}]' data-summary="개선을 장려합니다."><div class="icon-box">💡</div><h3>직무발명 포상</h3><div class="card-content">특허/개선 제안 시 기여도에 따라 보상합니다.</div></div>
+        <div class="card-3d" data-icon="📈" data-title="영업활동 포상" data-kv='[{"title":"보상","fields":{"내용":"매출 기여 보상"}}]' data-summary="영업 성과를 보상합니다."><div class="icon-box">📈</div><h3>영업활동 성과 포상</h3><div class="card-content">매출 기여 시 수익 기여도에 따라 보상합니다.</div></div>
+      </div>
+    </div>
+
+    <div class="category-wrapper reveal">
+      <div class="category-header"><h2>Special Benefits</h2></div>
+      <div class="welfare-grid">
+        <div class="card-3d" data-icon="🚗" data-title="교통비 지원" data-kv='[{"title":"지원","fields":{"내용":"통근차량 또는 지원금"}}]' data-summary="교통을 지원합니다."><div class="icon-box">🚗</div><h3>교통비 지원</h3><div class="card-content">사업장 기준에 따라 교통을 지원합니다.</div></div>
+        <div class="card-3d" data-icon="🍽️" data-title="식사 지원" data-kv='[{"title":"지원","fields":{"내용":"중식/석식 등"}}]' data-summary="식사를 지원합니다."><div class="icon-box">🍽️</div><h3>식사 지원</h3><div class="card-content">사업장 기준에 따라 식사를 지원합니다.</div></div>
+        <div class="card-3d" data-icon="🕊️" data-title="경조 지원" data-kv='[{"title":"지원","fields":{"내용":"경조금 및 유급휴가"}}]' data-summary="경조사를 지원합니다."><div class="icon-box">🕊️</div><h3>경조금 · 경조휴가</h3><div class="card-content">경조 발생 시 특별 휴가 및 금원을 지원합니다.</div></div>
+        <div class="card-3d" data-icon="🎁" data-title="명절 상여/선물" data-kv='[{"title":"지급","fields":{"내용":"상여 또는 선물"}}]' data-summary="명절을 지원합니다."><div class="icon-box">🎁</div><h3>명절상여 · 명절선물</h3><div class="card-content">사업장 성과에 따라 명절 선물을 지급합니다.</div></div>
+        <div class="card-3d" data-icon="🎂" data-title="생일 상품권" data-kv='[{"title":"지급","fields":{"대상":"전 임직원"}}]' data-summary="생일을 축하합니다."><div class="icon-box">🎂</div><h3>생일자 상품권</h3><div class="card-content">생일자에게 기프트콘을 발송합니다.</div></div>
+        <div class="card-3d" data-icon="🏫" data-title="대학입학 축하금" data-kv='[{"title":"지급","fields":{"금액":"50만원"}}]' data-summary="자녀 입학을 축하합니다."><div class="icon-box">🏫</div><h3>자녀 대학입학 축하금</h3><div class="card-content">자녀 대학 입학 시 <strong>50만원</strong>을 지원합니다.</div></div>
+        <div class="card-3d" data-icon="🤝" data-title="동호회 지원" data-kv='[{"title":"지원","fields":{"한도":"월 3만원/인"}}]' data-summary="취미 활동을 지원합니다."><div class="icon-box">🤝</div><h3>동호회 활동 지원</h3><div class="card-content">기준 충족 동호회에 활동비를 지원합니다.</div></div>
+        <div class="card-3d" data-icon="🚚" data-title="이벤트 지원" data-kv='[{"title":"내용","fields":{"방식":"푸드트럭 등"}}]' data-summary="이벤트를 지원합니다."><div class="icon-box">🚚</div><h3>이벤트 지원</h3><div class="card-content">시기별 푸드트럭 등 이벤트를 운영합니다.</div></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>© Logisian Co., Ltd. All Rights Reserved.</footer>
+
+  <div class="modal-dim" id="modalDim"></div>
+  <div class="modal" id="modalRoot">
+    <div class="modal-panel" id="modalPanel">
+      <div class="modal-header">
+        <div class="modal-title-wrap"><div class="modal-icon" id="modalIcon"></div><h3 class="modal-title" id="modalTitle"></h3></div>
+        <button class="modal-close" id="modalClose">닫기 (ESC)</button>
+      </div>
+      <div class="modal-body"><p class="modal-summary" id="modalSummary"></p><div id="modalKv"></div></div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const els = document.querySelectorAll('.reveal');
+      const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting) e.target.classList.add('in'); }), {threshold: 0.1});
+      els.forEach(el => io.observe(el));
+    })();
+
+    (function(){
+      const cards = document.querySelectorAll('.card-3d');
+      cards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width - 0.5;
+          const y = (e.clientY - rect.top) / rect.height - 0.5;
+          card.style.transform = `rotateX(${-y * 15}deg) rotateY(${x * 15}deg) translateY(-10px)`;
+        });
+        card.addEventListener('mouseleave', () => card.style.transform = '');
+      });
+    })();
+
+    const dim = document.getElementById('modalDim');
+    const root = document.getElementById('modalRoot');
+    const panel = document.getElementById('modalPanel');
+
+    document.querySelectorAll('.card-3d').forEach(card => {
+      card.addEventListener('click', function() {
+        document.getElementById('modalIcon').textContent = this.dataset.icon;
+        document.getElementById('modalTitle').textContent = this.dataset.title;
+        document.getElementById('modalSummary').textContent = this.dataset.summary;
+        
+        const kv = JSON.parse(this.dataset.kv || '[]');
+        let kvHtml = '';
+        kv.forEach(b => {
+          kvHtml += `<div class="kv"><div class="kv-title">${b.title}</div><div class="kv-grid">`;
+          for(let k in b.fields) kvHtml += `<div class="k">${k}</div><div class="v">${b.fields[k]}</div>`;
+          kvHtml += `</div></div>`;
+        });
+        document.getElementById('modalKv').innerHTML = kvHtml;
+
+        // 위치 보정 핵심: 클릭 시점의 문서 전체 스크롤 위치를 반영
+        const rect = this.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const vh = window.innerHeight;
+        
+        // 카드의 '문서상' 실제 위치 계산
+        const absoluteTop = rect.top + scrollTop;
+        
+        // 모달 패널 높이 추정 (렌더링 전이므로 넉넉히)
+        const panelH = 500; 
+        
+        // 화면 중앙 부근에 모달을 배치하되, 클릭한 카드 위치 근처로 설정
+        // absoluteTop(카드의 위치)에서 약간 위로 띄워서 노출
+        let finalTop = absoluteTop - (panelH / 3);
+        
+        // 상단 최소 여백 보정 (너무 위로 튀지 않게)
+        if (finalTop < scrollTop + 20) finalTop = scrollTop + 20;
+
+        root.style.setProperty('--modalTop', `${Math.round(finalTop)}px`);
+        dim.classList.add('open');
+        root.classList.add('open');
+      });
+    });
+
+    const closeModal = () => { dim.classList.remove('open'); root.classList.remove('open'); };
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    dim.addEventListener('click', closeModal);
+    window.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+  </script>
+</body>
+</html>
